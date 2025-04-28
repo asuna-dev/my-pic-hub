@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8123
   servlet:
     context-path: /api
 
@@ -9,9 +9,9 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/pichub
+    url: jdbc:mysql://127.0.0.1:3306/pic_hub
     username: root
-    password: 123456
+    password: mysql_123456
 
 mybatis-plus:
   configuration:
@@ -22,3 +22,14 @@ mybatis-plus:
       logic-delete-field: isDelete
       logic-delete-value: 1
       logic-not-delete-value: 0
+# 接口文档配置
+knife4j:
+  enable: true
+  openapi:
+    title: "pic-hub接口文档"
+    version: 1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - org.zepe.pichub.controller
