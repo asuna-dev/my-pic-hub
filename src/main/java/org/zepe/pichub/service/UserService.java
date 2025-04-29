@@ -29,9 +29,7 @@ public interface UserService extends IService<User> {
      */
     LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
-
     long userRegister(String account, String password, String checkPassword);
-
 
     /**
      * 获取当前登录用户
@@ -56,10 +54,18 @@ public interface UserService extends IService<User> {
      */
     boolean userLogout(HttpServletRequest request);
 
-    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+    LambdaQueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
     UserVO getUserVO(User user);
 
     List<UserVO> getUserVOList(List<User> userList);
+
+    /**
+     * 是否为管理员
+     *
+     * @param user
+     * @return
+     */
+    boolean isAdmin(User user);
 
 }

@@ -6,12 +6,11 @@ server:
 spring:
   application:
     name: picture-hub
-
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/pic_hub
-    username: root
-    password: mysql_123456
+  profiles:
+    active: local
+  servlet:
+    multipart:
+      max-file-size: 5MB
 
 mybatis-plus:
   configuration:

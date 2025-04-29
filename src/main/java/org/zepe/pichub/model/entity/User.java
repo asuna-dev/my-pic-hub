@@ -72,21 +72,4 @@ public class User {
      * 是否删除
      */
     private Integer isDelete;
-
-    private SFunction<User, ?> getFieldLambda(String fieldName) {
-        switch (fieldName) {
-            case "id":
-                return User::getId;
-            case "userAccount":
-                return User::getUserAccount;
-            case "userName":
-                return User::getUserName;
-            case "userProfile":
-                return User::getUserProfile;
-            case "userRole":
-                return User::getUserRole;
-            default:
-                throw new IllegalArgumentException("未知的排序字段: " + fieldName);
-        }
-    }
 }

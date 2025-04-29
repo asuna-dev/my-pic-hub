@@ -151,8 +151,9 @@ public class UserController {
         ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR);
         long current = userQueryRequest.getCurrent();
         long pageSize = userQueryRequest.getPageSize();
-        Page<User> userPage = userService.page(new Page<>(current, pageSize),
-                userService.getQueryWrapper(userQueryRequest));
+        Page<User> userPage =
+            userService.page(new Page<>(current, pageSize), userService.getQueryWrapper(userQueryRequest));
+
         Page<UserVO> userVOPage = new Page<>(current, pageSize, userPage.getTotal());
         List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
         userVOPage.setRecords(userVOList);

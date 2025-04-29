@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -12,6 +13,7 @@ import org.springframework.util.DigestUtils;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.model.dto.user.UserQueryRequest;
+import org.zepe.pichub.model.entity.Picture;
 import org.zepe.pichub.model.entity.User;
 import org.zepe.pichub.model.enums.UserRoleEnum;
 import org.zepe.pichub.model.vo.LoginUserVO;
@@ -19,6 +21,7 @@ import org.zepe.pichub.model.vo.UserVO;
 import org.zepe.pichub.service.UserService;
 import org.zepe.pichub.mapper.UserMapper;
 import org.springframework.stereotype.Service;
+import org.zepe.pichub.util.LambdaGenerator;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -35,8 +38,7 @@ import static org.zepe.pichub.constant.UserConstant.USER_LOGIN_STATE;
  */
 @Slf4j
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-        implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
     public long userRegister(String account, String password, String checkPassword) {
@@ -74,7 +76,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return user.getId();
     }
-
 
     @Override
     public String getEncryptPassword(String userPassword) {
@@ -116,7 +117,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
+        User currentUser = (User)userObj;
         if (currentUser == null || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -151,9 +152,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return true;
     }
 
+    // @Override
+    // public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+    //     if (userQueryRequest == null) {
+    //         throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+    //     }
+    //     Long id = userQueryRequest.getId();
+    //     String userAccount = userQueryRequest.getUserAccount();
+    //     String userName = userQueryRequest.getUserName();
+    //     String userProfile = userQueryRequest.getUserProfile();
+    //     String userRole = userQueryRequest.getUserRole();
+    //     String sortField = userQueryRequest.getSortField();
+    //     String sortOrder = userQueryRequest.getSortOrder();
+    //     QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+    //     queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+    //     queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+    //     queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+    //     queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+    //     queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+    //     queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+    //     return queryWrapper;
+    // }
 
     @Override
-    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+    public LambdaQueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
@@ -164,16 +186,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String userRole = userQueryRequest.getUserRole();
         String sortField = userQueryRequest.getSortField();
         String sortOrder = userQueryRequest.getSortOrder();
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
-        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
-        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
-        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
-        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), User::getId, id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), User::getUserRole, userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), User::getUserAccount, userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), User::getUserName, userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), User::getUserProfile, userProfile);
+
+        // 排序
+        if (StrUtil.isNotBlank(sortField)) {
+            SFunction<User, ?> fieldLambda = LambdaGenerator.createGetterFunction(User.class, sortField);
+            queryWrapper.orderBy(true, sortOrder.equals("ascend"), fieldLambda);
+        }
         return queryWrapper;
     }
-
 
     @Override
     public UserVO getUserVO(User user) {
@@ -193,6 +220,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
     }
 
+    @Override
+    public boolean isAdmin(User user) {
+        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
+    }
 
 }
 
