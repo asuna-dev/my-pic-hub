@@ -39,7 +39,7 @@ public class Response<T> implements Serializable {
     }
 
     static public <T> Response<T> failed(ErrorCode errorCode, String message) {
-        return new Response<>(null, errorCode.getCode(), errorCode.getMessage());
+        return new Response<>(null, errorCode.getCode(), message);
     }
 
     static public <T> Response<T> failed(int code, String message) {

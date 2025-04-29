@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.multipart.MultipartFile;
 import org.zepe.pichub.model.dto.picture.PictureQueryRequest;
+import org.zepe.pichub.model.dto.picture.PictureReviewRequest;
 import org.zepe.pichub.model.dto.picture.PictureUploadRequest;
 import org.zepe.pichub.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -20,12 +21,13 @@ public interface PictureService extends IService<Picture> {
     /**
      * 上传图片
      *
-     * @param multipartFile
+     * @param inputResource        目前支持url, MultipartFile
      * @param pictureUploadRequest
      * @param loginUser
      * @return
      */
-    PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+
+    PictureVO uploadPicture(Object inputResource, PictureUploadRequest pictureUploadRequest, User loginUser);
 
     LambdaQueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
 
@@ -33,5 +35,16 @@ public interface PictureService extends IService<Picture> {
 
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage);
 
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    void fillReviewParams(Picture picture, User loginUser);
+
     void validPicture(Picture picture);
+
 }

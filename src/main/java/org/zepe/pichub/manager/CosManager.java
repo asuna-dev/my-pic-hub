@@ -4,8 +4,10 @@ import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.*;
 
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
+import com.qcloud.cos.transfer.Upload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.qcloud.cos.transfer.TransferManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.zepe.pichub.config.CosClientConfig;
 
@@ -31,7 +33,7 @@ public class CosManager {
 
     @PreDestroy
     public void close() {
-        log.info("COSClient shutdown");
+        // log.info("COSClient shutdown");
         cosClient.shutdown();
     }
 
@@ -49,6 +51,19 @@ public class CosManager {
         picOperations.setIsPicInfo(1);
         // 构造处理参数
         putObjectRequest.setPicOperations(picOperations);
+        return cosClient.putObject(putObjectRequest);
+    }
+
+    public PutObjectResult putPictureObject(String key, InputStream inputStream) {
+        PutObjectRequest putObjectRequest =
+            new PutObjectRequest(cosClientConfig.getBucket(), key, inputStream, new ObjectMetadata());
+        // 对图片进行处理（获取基本信息也被视作为一种处理）
+        PicOperations picOperations = new PicOperations();
+        // 1 表示返回原图信息
+        picOperations.setIsPicInfo(1);
+        // 构造处理参数
+        putObjectRequest.setPicOperations(picOperations);
+
         return cosClient.putObject(putObjectRequest);
     }
 

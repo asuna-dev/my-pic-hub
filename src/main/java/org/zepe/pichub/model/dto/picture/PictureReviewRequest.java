@@ -6,19 +6,23 @@ import java.io.Serializable;
 
 /**
  * @author zzpus
- * @datetime 2025/4/28 15:39
+ * @datetime 2025/4/29 11:47
  * @description
  */
 @Data
-public class PictureUploadRequest implements Serializable {
+public class PictureReviewRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
     /**
-     * 图片 id（用于修改）
+     * id
      */
     private Long id;
     /**
-     * 文件地址
+     * 状态：0-待审核, 1-通过, 2-拒绝
      */
-    private String fileUrl;
+    private Integer reviewStatus;
+    /**
+     * 审核信息
+     */
+    private String reviewMessage;
 }
