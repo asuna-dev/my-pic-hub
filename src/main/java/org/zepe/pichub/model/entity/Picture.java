@@ -1,7 +1,11 @@
 package org.zepe.pichub.model.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import lombok.Data;
@@ -13,7 +17,7 @@ import lombok.Data;
  */
 @TableName(value = "picture")
 @Data
-public class Picture {
+public class Picture implements Serializable {
     /**
      * id
      */
@@ -79,25 +83,6 @@ public class Picture {
      */
     @TableField(value = "picFormat")
     private String picFormat;
-    /**
-     * 状态：0-待审核; 1-通过; 2-拒绝
-     */
-    private Integer reviewStatus;
-
-    /**
-     * 审核信息
-     */
-    private String reviewMessage;
-
-    /**
-     * 审核人 id
-     */
-    private Long reviewerId;
-
-    /**
-     * 审核时间
-     */
-    private Date reviewTime;
 
     /**
      * 创建用户 id
@@ -126,6 +111,36 @@ public class Picture {
     /**
      * 是否删除
      */
-    @TableLogic
+    @TableField(value = "isDelete")
     private Integer isDelete;
+
+    /**
+     * 审核状态：0-待审核; 1-通过; 2-拒绝
+     */
+    @TableField(value = "reviewStatus")
+    private Integer reviewStatus;
+
+    /**
+     * 审核信息
+     */
+    @TableField(value = "reviewMessage")
+    private String reviewMessage;
+
+    /**
+     * 审核人 ID
+     */
+    @TableField(value = "reviewerId")
+    private Long reviewerId;
+
+    /**
+     * 审核时间
+     */
+    @TableField(value = "reviewTime")
+    private Date reviewTime;
+
+    /**
+     * 缩略图 url
+     */
+    @TableField(value = "thumbnailUrl")
+    private String thumbnailUrl;
 }

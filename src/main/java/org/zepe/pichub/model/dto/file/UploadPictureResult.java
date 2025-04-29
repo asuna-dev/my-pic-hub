@@ -1,6 +1,9 @@
 package org.zepe.pichub.model.dto.file;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author zzpus
@@ -8,12 +11,19 @@ import lombok.Data;
  * @description
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class UploadPictureResult {
 
     /**
      * 图片地址
      */
     private String url;
+    /**
+     * 缩略图 url
+     */
+    private String thumbnailUrl;
 
     /**
      * 图片名称

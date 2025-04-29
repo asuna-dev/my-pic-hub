@@ -3,6 +3,7 @@ package org.zepe.pichub.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 import org.zepe.pichub.model.dto.picture.PictureQueryRequest;
 import org.zepe.pichub.model.dto.picture.PictureReviewRequest;
@@ -57,4 +58,5 @@ public interface PictureService extends IService<Picture> {
      */
     int uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 
+    void clearPictureFile(Picture oldPicture);
 }

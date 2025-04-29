@@ -1,11 +1,9 @@
 package org.zepe.pichub.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -18,9 +16,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.exception.ThrowUtils;
+import org.zepe.pichub.manager.CosManager;
 import org.zepe.pichub.manager.FileManager;
 import org.zepe.pichub.manager.upload.FilePictureUpload;
 import org.zepe.pichub.manager.upload.PictureUploadTemplate;
@@ -43,6 +43,8 @@ import org.zepe.pichub.util.LambdaGenerator;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -55,8 +57,7 @@ import java.util.stream.Collectors;
 @Service
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> implements PictureService {
     @Resource
-    private FileManager fileManager;
-
+    private CosManager cosManager;
     @Resource
     private FilePictureUpload filePictureUpload;
     @Resource
@@ -94,6 +95,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         }
         picture.setName(picName);
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
         picture.setPicHeight(uploadPictureResult.getPicHeight());
@@ -341,6 +343,32 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             }
         }
         return uploadCount;
+    }
+
+    @Override
+    public void clearPictureFile(Picture oldPicture) {
+        // 判断该图片是否被多条记录使用
+        String pictureUrl = oldPicture.getUrl();
+        log.info("ClearFile-1:{}", pictureUrl);
+        long count = this.lambdaQuery().eq(Picture::getUrl, pictureUrl).count();
+        // 有不止一条记录用到了该图片，不清理
+        if (count > 1) {
+            log.info("ClearFile-NO: {} ref {}", count, pictureUrl);
+            return;
+        }
+        // FIXME 注意，这里的 url 包含了域名，实际上只要传 key 值（存储路径）就够了
+        try {
+            log.info("ClearFile-2:{}", pictureUrl);
+            cosManager.deleteObject(new URL(pictureUrl).getPath());
+            // 清理缩略图
+            String thumbnailUrl = oldPicture.getThumbnailUrl();
+            if (StrUtil.isNotBlank(thumbnailUrl)) {
+                cosManager.deleteObject(new URL(thumbnailUrl).getPath());
+            }
+        } catch (MalformedURLException e) {
+            log.error("ClearFile-ERROR:{}", pictureUrl);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
     }
 
 }

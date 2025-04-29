@@ -6,7 +6,9 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
+import com.qcloud.cos.model.ciModel.persistence.ProcessResults;
 import lombok.extern.slf4j.Slf4j;
 import org.zepe.pichub.config.CosClientConfig;
 import org.zepe.pichub.exception.BusinessException;
@@ -17,6 +19,7 @@ import org.zepe.pichub.model.dto.file.UploadPictureResult;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -55,8 +58,19 @@ public abstract class PictureUploadTemplate {
             // 4. 上传图片到对象存储
             PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+            ProcessResults processResults = putObjectResult.getCiUploadResult().getProcessResults();
+            List<CIObject> objectList = processResults.getObjectList();
+            if (CollUtil.isNotEmpty(objectList)) {
+                CIObject compressObj = objectList.get(0);
+                CIObject thumbnailObj = compressObj;
+                if (objectList.size() > 1) {
+                    thumbnailObj = objectList.get(1);
+                }
+                // 封装压缩图结果
+                return buildResult(originFilename, compressObj, thumbnailObj);
+            }
 
-            // 5. 封装返回结果
+            // 5. 封装原图返回结果
             return buildResult(file, uploadPath, originFilename, imageInfo);
 
         } catch (Exception e) {
@@ -86,18 +100,34 @@ public abstract class PictureUploadTemplate {
      * 封装返回结果
      */
     private UploadPictureResult buildResult(File file, String uploadPath, String originFilename, ImageInfo imageInfo) {
-        UploadPictureResult uploadPictureResult = new UploadPictureResult();
         int width = imageInfo.getWidth();
         int height = imageInfo.getHeight();
-        double picScale = NumberUtil.round(width * 1.0 / height, 2).doubleValue();
-        uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
-        uploadPictureResult.setPicWidth(width);
-        uploadPictureResult.setPicHeight(height);
-        uploadPictureResult.setPicScale(picScale);
-        uploadPictureResult.setPicFormat(imageInfo.getFormat());
-        uploadPictureResult.setPicSize(FileUtil.size(file));
-        uploadPictureResult.setUrl(cosClientConfig.getHost() + uploadPath);
-        return uploadPictureResult;
+
+        return UploadPictureResult.builder()
+            .picName(FileUtil.mainName(originFilename))
+            .picWidth(width)
+            .picHeight(height)
+            .picScale(NumberUtil.round(width * 1.0 / height, 2).doubleValue())
+            .picFormat(imageInfo.getFormat())
+            .picSize(FileUtil.size(file))
+            .url(cosClientConfig.getHost() + uploadPath)
+            .build();
+    }
+
+    private UploadPictureResult buildResult(String originFilename, CIObject compress, CIObject thumbnail) {
+        int width = compress.getWidth();
+        int height = compress.getHeight();
+
+        return UploadPictureResult.builder()
+            .picName(FileUtil.mainName(originFilename))
+            .picWidth(width)
+            .picHeight(height)
+            .picScale(NumberUtil.round(width * 1.0 / height, 2).doubleValue())
+            .picFormat(compress.getFormat())
+            .picSize(compress.getSize().longValue())
+            .url(cosClientConfig.getHost() + "/" + compress.getKey())
+            .thumbnailUrl(cosClientConfig.getHost() + "/" + thumbnail.getKey())
+            .build();
     }
 
     /**

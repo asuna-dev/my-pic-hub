@@ -1,9 +1,15 @@
 package org.zepe.pichub.controller;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.zepe.pichub.annotation.AuthCheck;
@@ -27,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zzpus
@@ -41,6 +48,14 @@ public class PictureController {
     private PictureService pictureService;
     @Resource
     private UserService userService;
+    // 缓存 5 分钟移除
+    private final Cache<String, String> LOCAL_CACHE = Caffeine.newBuilder()
+        .initialCapacity(1024)
+        .maximumSize(10000L)
+        .expireAfterWrite(140L, TimeUnit.SECONDS)
+        .build();
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
     /**
      * 上传图片（可重新上传）
@@ -83,7 +98,11 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        // 操作数据库  
+        // 操作数据库
+        // todo 有bug，改成同步接口得了
+        // 先删图片文件再删记录
+        // 先删记录会提前导致有效count-1
+        pictureService.clearPictureFile(oldPicture);
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return Response.success(true);
@@ -177,15 +196,51 @@ public class PictureController {
                                                          HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
-        // 限制爬虫  
+        // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 默认展示已过审数据
+        // 普通用户默认只能查看已过审的数据
         pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
-        // 查询数据库  
+
+        // 构建缓存 key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String cachedKey = "yupicture:listPictureVOByPage:" + hashKey;
+        Page<PictureVO> cachedPage = null;
+        // 1 查本地缓存
+        String cachedValue = LOCAL_CACHE.getIfPresent(cachedKey);
+
+        // 本地缓存不为空
+        if (cachedValue != null) {
+            cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return Response.success(cachedPage);
+        }
+
+        // 2 查redis
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        cachedValue = valueOps.get(cachedKey);
+        if (cachedValue != null) {
+            cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            // 存入本地缓存
+            LOCAL_CACHE.put(cachedKey, cachedValue);
+            return Response.success(cachedPage);
+        }
+
+        // 3 查询数据库
         Page<Picture> picturePage =
             pictureService.page(new Page<>(current, size), pictureService.getQueryWrapper(pictureQueryRequest));
-        // 获取封装类  
-        return Response.success(pictureService.getPictureVOPage(picturePage));
+        // 获取封装类
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage);
+
+        // 存入 Redis 和 本地缓存
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+
+        LOCAL_CACHE.put(cachedKey, cacheValue);
+        // 5 - 10 分钟随机过期，防止雪崩
+        int cacheExpireTime = 120 + RandomUtil.randomInt(0, 120);
+        valueOps.set(cachedKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        // 返回结果
+        return Response.success(pictureVOPage);
     }
 
     /**
