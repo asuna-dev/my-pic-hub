@@ -5,6 +5,9 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -291,15 +294,30 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         if (ObjUtil.isNull(div)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取元素失败");
         }
-        Elements imgElementList = div.select("img.mimg");
+        // Elements imgElementList = div.select("img.mimg");
+        // 获取包含完整数据的元素
+        Elements imgElementList = div.select(".iusc");
         int uploadCount = 0;
-        String batchId = RandomUtil.randomString(10);
+        String batchId = RandomUtil.randomString(5);
         for (Element imgElement : imgElementList) {
-            String fileUrl = imgElement.attr("src");
-            if (StrUtil.isBlank(fileUrl)) {
-                log.info("当前链接为空，已跳过: {}", fileUrl);
+            // String fileUrl = imgElement.attr("src");
+            // if (StrUtil.isBlank(fileUrl)) {
+            //     log.info("当前链接为空，已跳过: {}", fileUrl);
+            //     continue;
+            // }
+            String fileUrl;
+            String dataM = imgElement.attr("m");
+            try {
+                JSONObject entries = JSONUtil.parseObj(dataM);
+                fileUrl = entries.getStr("murl");
+            } catch (Exception e) {
+                log.error("解析图片数据失败", e);
                 continue;
             }
+            if (StrUtil.isBlank(fileUrl)) {
+                continue;
+            }
+            log.info("try download:{}", fileUrl);
             // 处理图片上传地址，防止出现转义问题
             int questionMarkIndex = fileUrl.indexOf("?");
             if (questionMarkIndex > -1) {
