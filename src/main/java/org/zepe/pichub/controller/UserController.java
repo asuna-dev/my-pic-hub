@@ -13,7 +13,6 @@ import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.exception.ThrowUtils;
 import org.zepe.pichub.model.dto.user.*;
 import org.zepe.pichub.model.entity.User;
-import org.zepe.pichub.model.vo.LoginUserVO;
 import org.zepe.pichub.model.vo.UserVO;
 import org.zepe.pichub.service.UserService;
 
@@ -48,18 +47,18 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Response<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public Response<UserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(userLoginRequest == null, ErrorCode.PARAMS_ERROR);
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
-        LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
-        return Response.success(loginUserVO);
+        UserVO UserVO = userService.userLogin(userAccount, userPassword, request);
+        return Response.success(UserVO);
     }
 
     @GetMapping("/get/login")
-    public Response<LoginUserVO> getLoginUser(HttpServletRequest request) {
+    public Response<UserVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
-        return Response.success(userService.getLoginUserVO(user));
+        return Response.success(UserVO.objToVo(user));
     }
 
     @PostMapping("/logout")
@@ -108,7 +107,7 @@ public class UserController {
     public Response<UserVO> getUserVOById(long id) {
         Response<User> response = getUserById(id);
         User user = response.getData();
-        return Response.success(userService.getUserVO(user));
+        return Response.success(UserVO.objToVo(user));
     }
 
     /**

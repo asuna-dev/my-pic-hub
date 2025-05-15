@@ -15,7 +15,6 @@ import org.zepe.pichub.manager.CosManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 
 /**

@@ -1,6 +1,8 @@
 package org.zepe.pichub.model.vo;
 
 import lombok.Data;
+import org.springframework.beans.BeanUtils;
+import org.zepe.pichub.model.entity.User;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -42,4 +44,23 @@ public class UserVO implements Serializable {
      * 创建时间
      */
     private Date createTime;
+
+    public static User voToObj(UserVO userVO) {
+        if (userVO == null) {
+            return null;
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userVO, user);
+        return user;
+    }
+
+    public static UserVO objToVo(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
 }

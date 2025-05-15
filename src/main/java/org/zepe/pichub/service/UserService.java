@@ -1,11 +1,9 @@
 package org.zepe.pichub.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.zepe.pichub.model.dto.user.UserQueryRequest;
 import org.zepe.pichub.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.zepe.pichub.model.vo.LoginUserVO;
 import org.zepe.pichub.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +25,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return 脱敏后的用户信息
      */
-    LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
+    UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
     long userRegister(String account, String password, String checkPassword);
 
@@ -40,13 +38,6 @@ public interface UserService extends IService<User> {
     User getLoginUser(HttpServletRequest request);
 
     /**
-     * 获取脱敏的已登录用户信息
-     *
-     * @return
-     */
-    LoginUserVO getLoginUserVO(User user);
-
-    /**
      * 用户注销
      *
      * @param request
@@ -55,8 +46,6 @@ public interface UserService extends IService<User> {
     boolean userLogout(HttpServletRequest request);
 
     LambdaQueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
-
-    UserVO getUserVO(User user);
 
     List<UserVO> getUserVOList(List<User> userList);
 

@@ -93,7 +93,6 @@ public class CosManager {
         return cosClient.putObject(putObjectRequest);
     }
 
-    @Async("AsyncExecutor")
     public void deleteObject(String key) {
         log.info("ClearFile-3:{}", key);
         try {

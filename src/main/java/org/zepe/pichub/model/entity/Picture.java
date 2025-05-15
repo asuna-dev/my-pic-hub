@@ -143,4 +143,10 @@ public class Picture implements Serializable {
      */
     @TableField(value = "thumbnailUrl")
     private String thumbnailUrl;
+
+    /**
+     * 空间 id
+     */
+    private Long spaceId;
+
 }

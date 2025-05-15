@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
-import org.zepe.pichub.model.dto.picture.PictureQueryRequest;
-import org.zepe.pichub.model.dto.picture.PictureReviewRequest;
-import org.zepe.pichub.model.dto.picture.PictureUploadByBatchRequest;
-import org.zepe.pichub.model.dto.picture.PictureUploadRequest;
+import org.zepe.pichub.model.dto.picture.*;
 import org.zepe.pichub.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.zepe.pichub.model.entity.User;
@@ -28,8 +25,13 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser
      * @return
      */
-
     PictureVO uploadPicture(Object inputResource, PictureUploadRequest pictureUploadRequest, User loginUser);
+
+    void deletePicture(long pictureId, User loginUser);
+
+    void editPicture(Picture picture, User loginUser);
+
+    void checkPictureAuth(User loginUser, Picture picture);
 
     LambdaQueryWrapper<Picture> getQueryWrapper(PictureQueryRequest pictureQueryRequest);
 

@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +12,8 @@ import org.springframework.util.DigestUtils;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.model.dto.user.UserQueryRequest;
-import org.zepe.pichub.model.entity.Picture;
 import org.zepe.pichub.model.entity.User;
 import org.zepe.pichub.model.enums.UserRoleEnum;
-import org.zepe.pichub.model.vo.LoginUserVO;
 import org.zepe.pichub.model.vo.UserVO;
 import org.zepe.pichub.service.UserService;
 import org.zepe.pichub.mapper.UserMapper;
@@ -85,7 +82,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1. 校验
         if (StrUtil.hasBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -110,7 +107,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+        return UserVO.objToVo(user);
     }
 
     @Override
@@ -128,16 +125,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
         return currentUser;
-    }
-
-    @Override
-    public LoginUserVO getLoginUserVO(User user) {
-        if (user == null) {
-            return null;
-        }
-        LoginUserVO loginUserVO = new LoginUserVO();
-        BeanUtils.copyProperties(user, loginUserVO);
-        return loginUserVO;
     }
 
     @Override
@@ -203,21 +190,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public UserVO getUserVO(User user) {
-        if (user == null) {
-            return null;
-        }
-        UserVO userVO = new UserVO();
-        BeanUtils.copyProperties(user, userVO);
-        return userVO;
-    }
-
-    @Override
     public List<UserVO> getUserVOList(List<User> userList) {
         if (CollUtil.isEmpty(userList)) {
             return new ArrayList<>();
         }
-        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+        return userList.stream().map(UserVO::objToVo).collect(Collectors.toList());
     }
 
     @Override
