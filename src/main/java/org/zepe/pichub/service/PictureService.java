@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
+import org.zepe.pichub.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import org.zepe.pichub.model.dto.picture.*;
 import org.zepe.pichub.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -67,4 +68,7 @@ public interface PictureService extends IService<Picture> {
     void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
 
     List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(
+        CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 }

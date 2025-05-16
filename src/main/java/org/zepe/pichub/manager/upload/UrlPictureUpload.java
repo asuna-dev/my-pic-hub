@@ -2,6 +2,7 @@ package org.zepe.pichub.manager.upload;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.StreamProgress;
+import cn.hutool.core.net.url.UrlPath;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.*;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.zepe.pichub.exception.ThrowUtils;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author zzpus
@@ -78,7 +80,14 @@ public class UrlPictureUpload extends PictureUploadTemplate {
 
     @Override
     protected String getOriginFilename(Object inputSource) {
-        return FileUtil.getName((String)inputSource);
+        String fileUrl = (String)inputSource;
+        try {
+            URL url = new URL((String)inputSource);
+            return FileUtil.getName(url.getPath());
+        } catch (MalformedURLException e) {
+            log.error("invalid url: {}", fileUrl);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "invalid url");
+        }
     }
 
     @Override
