@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import lombok.Data;
@@ -17,7 +16,7 @@ import lombok.Data;
  */
 @TableName(value = "picture")
 @Data
-public class Picture implements Serializable {
+public class Picture {
     /**
      * id
      */
@@ -145,8 +144,14 @@ public class Picture implements Serializable {
     private String thumbnailUrl;
 
     /**
-     * 空间 id
+     * 空间 id（为空表示公共空间）
      */
+    @TableField(value = "spaceId")
     private Long spaceId;
 
+    /**
+     * 图片主色调
+     */
+    @TableField(value = "picColor")
+    private String picColor;
 }

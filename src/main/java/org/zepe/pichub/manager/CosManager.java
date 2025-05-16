@@ -76,7 +76,7 @@ public class CosManager {
         putObjectRequest.setPicOperations(picOperations);
         PutObjectResult putObjectResult = cosClient.putObject(putObjectRequest);
         // 删除原图
-        deleteObject(key);
+        // deleteObject(key);
         return putObjectResult;
     }
 

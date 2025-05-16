@@ -13,6 +13,8 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.zepe.pichub.annotation.AuthCheck;
+import org.zepe.pichub.api.imagesearch.ImageSearchApiFacade;
+import org.zepe.pichub.api.imagesearch.model.ImageSearchResult;
 import org.zepe.pichub.common.DeleteRequest;
 import org.zepe.pichub.common.Response;
 import org.zepe.pichub.constant.UserConstant;
@@ -208,28 +210,28 @@ public class PictureController {
         }
 
         // 构建缓存 key
-        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
-        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String cachedKey = "yupicture:listPictureVOByPage:" + hashKey;
-        Page<PictureVO> cachedPage = null;
-        // 1 查本地缓存
-        String cachedValue = LOCAL_CACHE.getIfPresent(cachedKey);
-
-        // 本地缓存不为空
-        if (cachedValue != null) {
-            cachedPage = JSONUtil.toBean(cachedValue, Page.class);
-            return Response.success(cachedPage);
-        }
-
-        // 2 查redis
-        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
-        cachedValue = valueOps.get(cachedKey);
-        if (cachedValue != null) {
-            cachedPage = JSONUtil.toBean(cachedValue, Page.class);
-            // 存入本地缓存
-            LOCAL_CACHE.put(cachedKey, cachedValue);
-            return Response.success(cachedPage);
-        }
+        // String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
+        // String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        // String cachedKey = "yupicture:listPictureVOByPage:" + hashKey;
+        // Page<PictureVO> cachedPage = null;
+        // // 1 查本地缓存
+        // String cachedValue = LOCAL_CACHE.getIfPresent(cachedKey);
+        //
+        // // 本地缓存不为空
+        // if (cachedValue != null) {
+        //     cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+        //     return Response.success(cachedPage);
+        // }
+        //
+        // // 2 查redis
+        // ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        // cachedValue = valueOps.get(cachedKey);
+        // if (cachedValue != null) {
+        //     cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+        //     // 存入本地缓存
+        //     LOCAL_CACHE.put(cachedKey, cachedValue);
+        //     return Response.success(cachedPage);
+        // }
 
         // 3 查询数据库
         Page<Picture> picturePage =
@@ -237,13 +239,13 @@ public class PictureController {
         // 获取封装类
         Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage);
 
-        // 存入 Redis 和 本地缓存
-        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
-
-        LOCAL_CACHE.put(cachedKey, cacheValue);
-        // 5 - 10 分钟随机过期，防止雪崩
-        int cacheExpireTime = 120 + RandomUtil.randomInt(0, 120);
-        valueOps.set(cachedKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+        // // 存入 Redis 和 本地缓存
+        // String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+        //
+        // LOCAL_CACHE.put(cachedKey, cacheValue);
+        // // 5 - 10 分钟随机过期，防止雪崩
+        // int cacheExpireTime = 120 + RandomUtil.randomInt(0, 120);
+        // valueOps.set(cachedKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
 
         // 返回结果
         return Response.success(pictureVOPage);
@@ -289,6 +291,43 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return Response.success(pictureTagCategory);
+    }
+
+    /**
+     * 以图搜图
+     */
+    @PostMapping("/search/picture")
+    public Response<List<ImageSearchResult>> searchPictureByPicture(
+        @RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 调用cos自带方法将webp转成png
+        String picUrl = oldPicture.getUrl() + "?imageMogr2/format/png";
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(picUrl);
+        return Response.success(resultList);
+    }
+
+    @PostMapping("/search/color")
+    public Response<List<PictureVO>> searchPictureByColor(
+        @RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(searchPictureByColorRequest == null, ErrorCode.PARAMS_ERROR);
+        String picColor = searchPictureByColorRequest.getPicColor();
+        Long spaceId = searchPictureByColorRequest.getSpaceId();
+        User loginUser = userService.getLoginUser(request);
+        List<PictureVO> result = pictureService.searchPictureByColor(spaceId, picColor, loginUser);
+        return Response.success(result);
+    }
+
+    @PostMapping("/edit/batch")
+    public Response<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest,
+                                                HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchRequest, loginUser);
+        return Response.success(true);
     }
 
 }

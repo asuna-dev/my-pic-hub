@@ -40,6 +40,7 @@ public abstract class PictureUploadTemplate {
      * 模板方法，定义上传流程
      */
     public final UploadPictureResult uploadPicture(Object inputSource, String uploadPathPrefix) {
+        UploadPictureResult result = null;
         // 1. 校验图片
         validPicture(inputSource);
 
@@ -67,12 +68,13 @@ public abstract class PictureUploadTemplate {
                     thumbnailObj = objectList.get(1);
                 }
                 // 封装压缩图结果
-                return buildResult(originFilename, compressObj, thumbnailObj);
+                result = buildResult(originFilename, compressObj, thumbnailObj);
+            } else {
+                // 5. 封装原图返回结果
+                result = buildResult(file, uploadPath, originFilename, imageInfo);
             }
-
-            // 5. 封装原图返回结果
-            return buildResult(file, uploadPath, originFilename, imageInfo);
-
+            result.setPicColor(imageInfo.getAve());
+            return result;
         } catch (Exception e) {
             log.error("图片上传到对象存储失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");

@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.zepe.pichub.model.entity.User;
 import org.zepe.pichub.model.vo.PictureVO;
 
+import java.util.List;
+
 /**
  * @author zzpus
  * @description 针对表【picture(图片)】的数据库操作Service
@@ -61,4 +63,8 @@ public interface PictureService extends IService<Picture> {
     int uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 
     void clearPictureFile(Picture oldPicture);
+
+    void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
+
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
 }
