@@ -2,6 +2,7 @@ package org.zepe.pichub.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
@@ -11,7 +12,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
+import org.zepe.pichub.manager.auth.StpKit;
 import org.zepe.pichub.model.dto.user.UserQueryRequest;
+import org.zepe.pichub.model.dto.user.UserRegisterRequest;
 import org.zepe.pichub.model.entity.User;
 import org.zepe.pichub.model.enums.UserRoleEnum;
 import org.zepe.pichub.model.vo.UserVO;
@@ -38,7 +41,11 @@ import static org.zepe.pichub.constant.UserConstant.USER_LOGIN_STATE;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Override
-    public long userRegister(String account, String password, String checkPassword) {
+    public long userRegister(UserRegisterRequest userRegisterRequest) {
+        String account = userRegisterRequest.getUserAccount();
+        String password = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+        String userName = userRegisterRequest.getUserName();
         // 1. 校验
         if (StrUtil.hasBlank(account, password, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -51,6 +58,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         if (!password.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        if (StrUtil.isBlank(userName)) {
+            userName = "user-" + RandomUtil.randomString(8);
         }
         // 2. 检查是否重复
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
@@ -65,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setUserAccount(account);
         user.setUserPassword(encryptPassword);
-        user.setUserName("无名");
+        user.setUserName(userName);
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = this.save(user);
         if (!saveResult) {
@@ -107,6 +117,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
         return UserVO.objToVo(user);
     }
 

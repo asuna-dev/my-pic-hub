@@ -2,6 +2,7 @@ package org.zepe.pichub.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.zepe.pichub.model.dto.user.UserQueryRequest;
+import org.zepe.pichub.model.dto.user.UserRegisterRequest;
 import org.zepe.pichub.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.zepe.pichub.model.vo.UserVO;
@@ -27,7 +28,7 @@ public interface UserService extends IService<User> {
      */
     UserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
 
-    long userRegister(String account, String password, String checkPassword);
+    long userRegister(UserRegisterRequest userRegisterRequest);
 
     /**
      * 获取当前登录用户

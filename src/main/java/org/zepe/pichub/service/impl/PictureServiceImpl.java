@@ -88,9 +88,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
             // 必须空间创建人（管理员）才能上传
-            if (!loginUser.getId().equals(space.getUserId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
-            }
+            // if (!loginUser.getId().equals(space.getUserId())) {
+            //     throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
+            // }
             // 校验额度
             if (space.getTotalCount() >= space.getMaxCount()) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "空间条数不足");
@@ -495,18 +495,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
     @Override
     public void checkPictureAuth(User loginUser, Picture picture) {
-        Long spaceId = picture.getSpaceId();
-        if (spaceId == null) {
-            // 公共图库，仅本人或管理员可操作
-            if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
-        } else {
-            // 私有空间，仅空间管理员可操作
-            if (!picture.getUserId().equals(loginUser.getId())) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
-        }
+        // Long spaceId = picture.getSpaceId();
+        // if (spaceId == null) {
+        //     // 公共图库，仅本人或管理员可操作
+        //     if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+        //         throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        //     }
+        // } else {
+        //     // 私有空间，仅空间管理员可操作
+        //     if (!picture.getUserId().equals(loginUser.getId())) {
+        //         throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        //     }
+        // }
     }
 
     @Override

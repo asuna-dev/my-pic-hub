@@ -11,6 +11,7 @@ import org.zepe.pichub.constant.UserConstant;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.exception.ThrowUtils;
+import org.zepe.pichub.manager.auth.SpaceUserAuthManager;
 import org.zepe.pichub.model.dto.space.*;
 import org.zepe.pichub.model.entity.Space;
 import org.zepe.pichub.model.entity.User;
@@ -39,6 +40,8 @@ public class SpaceController {
     private SpaceService spaceService;
     @Resource
     private UserService userService;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
     public Response<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
@@ -90,9 +93,10 @@ public class SpaceController {
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         SpaceVO spaceVO = spaceService.getSpaceVO(space);
-        // User loginUser = userService.getLoginUser(request);
-        // List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
-        // spaceVO.setPermissionList(permissionList);
+
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         // 获取封装类
         return Response.success(spaceVO);
     }

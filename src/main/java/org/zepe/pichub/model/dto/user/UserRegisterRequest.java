@@ -18,6 +18,10 @@ public class UserRegisterRequest implements Serializable {
      * 账号
      */
     private String userAccount;
+    /**
+     * 昵称
+     */
+    private String userName;
 
     /**
      * 密码
