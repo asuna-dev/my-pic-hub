@@ -11,6 +11,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.zepe.pichub.exception.BusinessException;
 import org.zepe.pichub.exception.ErrorCode;
 import org.zepe.pichub.exception.ThrowUtils;
+import org.zepe.pichub.manager.sharding.DynamicShardingManager;
 import org.zepe.pichub.mapper.SpaceUserMapper;
 import org.zepe.pichub.model.dto.space.SpaceAddRequest;
 import org.zepe.pichub.model.dto.space.SpaceQueryRequest;
@@ -48,6 +49,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space> implements
     private TransactionTemplate transactionTemplate;
     @Resource
     private SpaceUserMapper spaceUserMapper;
+    // @Resource
+    // private DynamicShardingManager dynamicShardingManager;
 
     @Override
     public long addSpace(SpaceAddRequest spaceAddRequest, User loginUser) {
@@ -98,6 +101,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space> implements
                     int cnt = spaceUserMapper.insert(spaceUser);
                     ThrowUtils.throwIf(cnt != 1, ErrorCode.OPERATION_ERROR);
                 }
+                // dynamicShardingManager.createSpacePictureTable(space);
 
                 // 返回新写入的数据 id
                 return space.getId();

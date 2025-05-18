@@ -20,6 +20,26 @@ spring:
     store-type: redis
     # session 30 天过期
     timeout: 2592000
+  # 空间图片分表
+  shardingsphere:
+    rules:
+      sharding:
+        tables:
+          picture:
+            actual-data-nodes: pic_hub.picture  # 动态分表
+            table-strategy:
+              standard:
+                sharding-column: spaceId
+                sharding-algorithm-name: picture_sharding_algorithm  # 使用自定义分片算法
+        sharding-algorithms:
+          picture_sharding_algorithm:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: org.zepe.pichub.manager.sharding.PictureShardingAlgorithm
+    props:
+      sql-show: true
+
 
 mybatis-plus:
   configuration:
@@ -30,6 +50,7 @@ mybatis-plus:
       logic-delete-field: isDelete
       logic-delete-value: 1
       logic-not-delete-value: 0
+    enable-sql-runner: true
 
 
 ############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
